@@ -1,38 +1,8 @@
-import urllib2 as ul
+from massey import *
 import os
 import datetime
 import operator
 import pprint
-
-def scrape_game_history(year):
-    game_template = "http://masseyratings.com/scores.php?s=cb{year}&sub=11590&all=1&mode=3&format=1"
-    team_template = "http://masseyratings.com/scores.php?s=cb{year}&sub=11590&all=1&mode=3&format=2"
-    print "Downloading game history for year " + str(year)
-    game_response = ul.urlopen(game_template.format(year=str(year)))
-    print "Downloading team conversions for year " + str(year)
-    team_response = ul.urlopen(team_template.format(year=str(year)))
-    return game_response, team_response
-
-def generate_game_filename(year):
-    return "data/" + str(year) + "gi.txt"
-
-def generate_team_filename(year):
-    return "data/" + str(year) + "ti.txt"
-
-def tokenize_csv_line(line_in):
-    parsed = line_in.split(',')
-    tokens = []
-    for token in parsed:
-        tokens.append(token.strip())
-    return tokens
-
-def parse_team_line(line_in):
-    key_index = ["team_id", "team_name"]
-    return dict(zip(key_index, tokenize_csv_line(line_in)))
-
-def parse_game_line(line_in):
-    key_index = ["epoch", "datestr", "team1_id", "team1_home", "team1_score", "team2_id", "team2_home", "team2_score"]
-    return dict(zip(key_index, tokenize_csv_line(line_in)))
 
 class Game(object):
     def __init__(self, *args, **kwargs):
@@ -123,18 +93,21 @@ def get_game_data_by_years(desired_years):
                 print "Error: could not open file " + generate_game_filename(year)
                 quit()
 
-def generate_gamelist_by_date(date, desired_years):
+def generate_gamelist(desired_years, filter=None):
     games = []
     for year in desired_years:
         print "------- " + str(year) + " -------"
-        csv = open("data/{year}gi.txt".format(year=year), "r")
+        csv = open(generate_game_filename(year), "r")
         team_dict = fill_dict_by_year(year)
         for line in csv:
             parsed = parse_game_line(line)
-            if gamestring_on_date(parsed["datestr"], date):
+            if filter:
+                if(filter(parsed)):
+                    games.append(Game(tokens=parsed, team_dict=team_dict))
+            else:    
                 games.append(Game(tokens=parsed, team_dict=team_dict))
     return games
-        
+
 
 # Create a dictionary of all the teams that played on 1/23 and
 # sum their win/loss margins
@@ -168,9 +141,12 @@ def build_relevant_cum_margin(relevant, cum_marg):
 def main():
     anniv = datetime.date(2010, 1, 23)
     years = range(2000, 2014, 1)
+
+    def date_filter(parsed_str):
+        return gamestring_on_date(parsed_str['datestr'], anniv)
     
     get_game_data_by_years(years)
-    gamelist = generate_gamelist_by_date(anniv, years)
+    gamelist = generate_gamelist(years, date_filter)
     margins = build_cumulative_margin(gamelist)
     thisyears = build_teamlist("teamlist.txt", margins)
     relevant_margins = build_relevant_cum_margin(thisyears, margins)
