@@ -34,5 +34,8 @@ gameframe = pandas.DataFrame(gamelist)
 Requirements
 ---
 * pandas (for sample app only)
+
+
 <br><br><br>
+Licensed under the GPL
 ***Happy Hacking***

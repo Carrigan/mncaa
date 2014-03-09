@@ -1,3 +1,26 @@
+"""
+Author: Brian Carrigan
+Date: 3/9/2014
+Email: brian.c.carrigan@gmail.com
+
+This file is part of the the mncaa python software package.
+
+The mncaa python software package is free software: you 
+can redistribute it and/or modify it under the terms of the GNU 
+General Public License as published by the Free Software Foundation, 
+either version 3 of the License, or (at your option) any later 
+version.
+
+The mncaa python software package is distributed in 
+the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with the mncaa python software package.  If not, 
+see <http://www.gnu.org/licenses/>.
+"""
+
 import urllib2 as ul
 import os
 import datetime
