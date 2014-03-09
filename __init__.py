@@ -37,32 +37,9 @@ class Game(object):
             return self.score_1 - self.score_2
         return self.score_1 - self.score_2
 
-    @property
-    def score(self):
-        return self.winner, self.loser, (float(self.margin) / (self.score_1 + self.score_2))
-
-
-def csv_str_to_date(str_in):
-    return datetime.date(int(str_in[:4]), int(str_in[4:6]), int(str_in[6:8]))
-
-def gamestring_on_date(str_in, date):
-    try:
-        date_of_game = csv_str_to_date(str_in)
-    except:
-        return False
-    return ((date_of_game.day == date.day) and (date_of_game.month == date.month))
-
-def fill_dict_by_year(year):
-    team_dict = {}
-    team_file = open("data/{year}ti.txt".format(year = year), "r")
-    for line in team_file:
-        parsed = parse_team_line(line)
-        team_dict[parsed["team_id"]] = parsed["team_name"]
-    team_file.close()
-    return team_dict
-
-def update_game_dict(game_dict, game):
-    w, l, m = game.score
+# Add or subtract a game's margins from each team involved in a game
+def append_game_dict(game_dict, game):
+    w, l, m = game.winner, game.loser, (float(game.margin) / (game.score_1 + game.score_2))
     if w not in game_dict:
         game_dict[w] = 0
     if l not in game_dict:
@@ -70,39 +47,17 @@ def update_game_dict(game_dict, game):
     game_dict[w] += m
     game_dict[l] -= m
 
-def get_game_data_by_years(desired_years):
-    # Grab the date from the following years if it doesn't exist
-    if not os.path.exists("data"):
-        os.makedirs("data")
-        for year in desired_years:
-            games, teams = scrape_game_history(year)
-            try:
-                game_file = open(generate_game_filename(year), "w")
-                print "Writing " + generate_game_filename(year) + "..."
-                game_file.write(games.read())
-                game_file.close()
-            except:
-                print "Error: could not open file " + generate_game_filename(year)
-                quit()
-            try:
-                team_file = open(generate_team_filename(year), "w")
-                print "Writing " + generate_team_filename(year) + "..."
-                team_file.write(teams.read())
-                team_file.close()
-            except:
-                print "Error: could not open file " + generate_game_filename(year)
-                quit()
-
+# Generate a list of Games from the massery files.
 def generate_gamelist(desired_years, filter=None):
     games = []
     for year in desired_years:
         print "------- " + str(year) + " -------"
         csv = open(generate_game_filename(year), "r")
-        team_dict = fill_dict_by_year(year)
+        team_dict = create_team_dictionary(year)
         for line in csv:
             parsed = parse_game_line(line)
             if filter:
-                if(filter(parsed)):
+                if( filter(parsed) ):
                     games.append(Game(tokens=parsed, team_dict=team_dict))
             else:    
                 games.append(Game(tokens=parsed, team_dict=team_dict))
@@ -114,7 +69,7 @@ def generate_gamelist(desired_years, filter=None):
 def build_cumulative_margin(game_list):
     cummarge = {}
     for game in game_list:
-        update_game_dict(cummarge, game)
+        append_game_dict(cummarge, game)
     return cummarge
 
 # Get this years teams
@@ -138,24 +93,40 @@ def build_relevant_cum_margin(relevant, cum_marg):
                     relevant_scores[team] = cum_marg[team]
     return relevant_scores
 
+# This is a test filter to be used when making margins
+def anniversary_filter(parsed_str):
+    anniv = datetime.date(2010, 1, 23)
+    try:
+        date_of_game = get_game_date(parsed_str)
+    except:
+        return False
+    return ((date_of_game.day == anniv.day) and (date_of_game.month == anniv.month))
+
+
 def main():
     anniv = datetime.date(2010, 1, 23)
     years = range(2000, 2014, 1)
-
-    def date_filter(parsed_str):
-        return gamestring_on_date(parsed_str['datestr'], anniv)
     
-    get_game_data_by_years(years)
-    gamelist = generate_gamelist(years, date_filter)
+    # Grab all of the massey CSVs
+    download_massey_csvs(years)
+
+    # Create a list of all games filtered by anniversary_filter
+    gamelist = generate_gamelist(years, filter=anniversary_filter)
+
+    # Use this list to accumulate the win/loss margins
     margins = build_cumulative_margin(gamelist)
+
+    # Take the win loss margins of all teams and strip out any teams not in
+    # this year's NCAA bracket.
     thisyears = build_teamlist("teamlist.txt", margins)
     relevant_margins = build_relevant_cum_margin(thisyears, margins)
 
+    # 1. Sort the scores from highest to lowest
+    # 2. Enter them into a bracket
+    # 3. ?
+    # 4  Win 1,000,000,000 from Mr. Buffet
     sorted_winners = sorted(relevant_margins.iteritems(), key=operator.itemgetter(1), reverse=True)
     pprint.pprint(sorted_winners)
 
 if __name__ == "__main__":
     main()
-    
-
-
