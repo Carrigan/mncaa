@@ -71,7 +71,7 @@ class MNCAA(object):
         game_response = ul.urlopen(game_template.format(year=str(year)))
         return game_response
 
-    def _scrape_team_data(year):
+    def _scrape_team_data(self, year):
         print "Downloading team conversions for year " + str(year)
         team_template = "http://masseyratings.com/scores.php?s=cb{year}&sub=11590&all=1&mode=3&format=2"
         team_response = ul.urlopen(team_template.format(year=str(year)))
@@ -83,7 +83,7 @@ class MNCAA(object):
                 os.makedirs(self.data_dir)
             else:
                 os.makedir(self.data_dir)
-                
+
         for year in self.years:
             if not os.path.isfile(self._game_filename(year)):
                 games = self.scrape_game_data(year)
