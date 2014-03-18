@@ -79,7 +79,11 @@ class MNCAA(object):
 
     def download_massey_csvs(self):
         if not os.path.exists(self.data_dir):
-            os.makedir(self.data_dir)
+            if os.name is 'nt':
+                os.makedirs(self.data_dir)
+            else:
+                os.makedir(self.data_dir)
+                
         for year in self.years:
             if not os.path.isfile(self._game_filename(year)):
                 games = self.scrape_game_data(year)
