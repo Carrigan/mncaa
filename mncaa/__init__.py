@@ -86,7 +86,7 @@ class MNCAA(object):
 
         for year in self.years:
             if not os.path.isfile(self._game_filename(year)):
-                games = self.scrape_game_data(year)
+                games = self._scrape_game_data(year)
                 try:
                     game_file = open(self._game_filename(year), "w")
                     print "Writing " + self._game_filename(year) + "..."
@@ -97,7 +97,7 @@ class MNCAA(object):
                     quit()
 
             if not os.path.isfile(self._team_filename(year)):
-                teams = self.scrape_team_data(year)
+                teams = self._scrape_team_data(year)
                 try:
                     team_file = open(self._team_filename(year), "w")
                     print "Writing " + self._team_filename(year) + "..."
