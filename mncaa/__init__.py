@@ -55,7 +55,7 @@ class MNCAA(object):
         self.game_filename_gen = game_filename_gen
         self.team_filename_gen = team_filename_gen
         if not years:
-            self.years = range(2000,2014,1)
+            self.years = range(2000, int(datetime.date.today().year) + 1, 1)
         else:
             self.years = years
 
